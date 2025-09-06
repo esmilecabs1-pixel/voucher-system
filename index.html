@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voucher System</title>
+</head>
+<body>
+    <h1>Generate Voucher</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+        {% for category, message in messages %}
+          <li><strong>{{ category.capitalize() }}:</strong> {{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    <form method="POST">
+        <label>Username:</label>
+        <input type="text" name="username" value="{{ username }}">
+        <button type="submit">Generate</button>
+    </form>
+
+    {% if voucher %}
+        <p><strong>Your voucher code:</strong> <span id="voucher">{{ voucher }}</span></p>
+        <button onclick="copyVoucher()">Copy Voucher</button>
+    {% endif %}
+
+    <script>
+        function copyVoucher() {
+            var voucher = document.getElementById("voucher").innerText;
+            navigator.clipboard.writeText(voucher).then(() => {
+                alert("Voucher copied to clipboard!");
+            });
+        }
+    </script>
+</body>
+</html>

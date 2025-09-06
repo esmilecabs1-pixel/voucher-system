@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin - Voucher List</title>
+</head>
+<body>
+    <h1>All Generated Vouchers</h1>
+    <table border="1">
+        <tr>
+            <th>Username</th>
+            <th>Voucher Code</th>
+        </tr>
+        {% for user, code in vouchers.items() %}
+        <tr>
+            <td>{{ user }}</td>
+            <td>{{ code }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
