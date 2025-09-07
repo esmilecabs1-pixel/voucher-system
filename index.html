@@ -1,22 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Voucher System</title>
+    <meta charset="UTF-8">
+    <title>Voucher Generator</title>
 </head>
 <body>
     <h1>Generate Voucher</h1>
-    <form method="POST">
-        <label>Username:</label>
-        <input type="text" name="username" required>
-        <button type="submit">Generate</button>
+
+    <!-- Display success/error messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+          {% for category, message in messages %}
+            <li style="color: {{ 'green' if category=='success' else 'red' }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <form method="post">
+        <button type="submit">Generate Voucher</button>
     </form>
 
-    {% if code %}
-        <h2>Voucher Generated!</h2>
-        <p>Username: {{ username }}</p>
-        <p>Voucher Code: {{ code }}</p>
+    {% if voucher_code %}
+        <p>Latest Voucher: <strong>{{ voucher_code }}</strong></p>
     {% endif %}
 
-    <p><a href="/admin">Go to Admin Panel</a></p>
+    <p><a href="/admin">Go to Admin</a></p>
 </body>
 </html>
