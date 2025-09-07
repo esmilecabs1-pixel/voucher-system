@@ -1,14 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, flash
 import random
 import string
 import sqlite3
+import os
 from functools import wraps
+from routeros_api import RouterOsApiPool
 
 app = Flask(__name__, template_folder='.', static_folder='.')
-app.secret_key = 'supersecretkey'  # Needed for flash messages
+app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")
 
 DB_FILE = 'vouchers.db'
-ADMIN_PASSWORD = 'admin123'  # Change this to your secure password
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
 # ---------------------- Database Setup ----------------------
 def init_db():
@@ -52,6 +54,30 @@ def save_voucher(username, code):
     conn.commit()
     conn.close()
 
+# ---------------------- Mikrotik Integration ----------------------
+def add_to_mikrotik(username, password):
+    try:
+        api_pool = RouterOsApiPool(
+            host=os.getenv("MT_HOST", "172.17.0.1"),
+            username=os.getenv("MT_USER", "cabigas"),
+            password=os.getenv("MT_PASS", "Esmilefb@Genuin3"),
+            port=int(os.getenv("MT_PORT", 8728)),
+            plaintext_login=True
+        )
+        api = api_pool.get_api()
+
+        api.get_resource('/ip/hotspot/user').add(
+            name=username,
+            password=password,
+            profile=os.getenv("MT_PROFILE", "default")
+        )
+
+        api_pool.disconnect()
+        return True
+    except Exception as e:
+        print("Mikrotik error:", e)
+        return False
+
 # ---------------------- Routes ----------------------
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -67,10 +93,15 @@ def index():
             else:
                 voucher_code = generate_voucher()
                 save_voucher(username, voucher_code)
-                flash('Voucher generated successfully!', 'success')
+
+                # Add to Mikrotik
+                if add_to_mikrotik(username, voucher_code):
+                    flash('Voucher generated and added to Mikrotik!', 'success')
+                else:
+                    flash('Voucher saved but Mikrotik connection failed!', 'error')
+
     return render_template('index.html', username=username, voucher=voucher_code)
 
-# Simple admin authentication decorator
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
