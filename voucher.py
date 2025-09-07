@@ -1,39 +1,47 @@
 from flask import Flask, render_template, request, jsonify
-from routeros_api import RouterOsApiPool, ApiException
-import random, string, os
+import os
+import random
+import string
+import routeros_api
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.')  # Use current folder for HTML
 
 # MikroTik connection settings
-MIKROTIK_HOST = os.getenv("MIKROTIK_HOST", "172.17.0.1")
-MIKROTIK_USER = os.getenv("MIKROTIK_USER", "benjor")
-MIKROTIK_PASS = os.getenv("qpwoieur", "")
+RO_HOST = os.getenv("RO_HOST", "192.168.88.1")
+RO_USER = os.getenv("RO_USER", "admin")
+RO_PASS = os.getenv("RO_PASS", "")
 
-def generate_voucher(length=8):
+def connect_mikrotik():
+    try:
+        connection = routeros_api.RouterOsApiPool(
+            RO_HOST, username=RO_USER, password=RO_PASS, plaintext_login=True
+        )
+        api = connection.get_api()
+        return connection, api
+    except Exception as e:
+        print("MikroTik connection failed:", e)
+        return None, None
+
+def generate_code(length=8):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
-def add_to_mikrotik(username, password, profile='default'):
-    try:
-        connection = RouterOsApiPool(MIKROTIK_HOST, username=MIKROTIK_USER, password=MIKROTIK_PASS, plaintext_login=True)
-        api = connection.get_api()
-        api.get_resource('/ip/hotspot/user').add(name=username, password=password, profile=profile)
-        connection.disconnect()
-        return True
-    except ApiException:
-        return False
-
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("index.html")
-
-@app.route("/generate", methods=["POST"])
-def generate():
-    username = generate_voucher()
-    success = add_to_mikrotik(username, username)
-    if success:
-        return jsonify({"status": "success", "voucher": username})
-    else:
-        return jsonify({"status": "error", "message": "Failed to connect to MikroTik"}), 500
+    code = ""
+    if request.method == "POST":
+        connection, api = connect_mikrotik()
+        if not api:
+            return "MikroTik unreachable. Cannot generate voucher.", 500
+        
+        code = generate_code()
+        try:
+            api.get_resource('/ip/hotspot/user').add(name=code, password=code, profile='default')
+            connection.disconnect()
+        except Exception as e:
+            print("Failed to add voucher:", e)
+            return f"Voucher generated but failed to add to MikroTik: {code}", 500
+    
+    return render_template("index.html", code=code)
 
 @app.route("/admin")
 def admin():
