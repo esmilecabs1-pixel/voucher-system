@@ -7,9 +7,9 @@ import routeros_api
 app = Flask(__name__, template_folder='.')  # Use current folder for HTML
 
 # MikroTik connection settings
-RO_HOST = os.getenv("RO_HOST", "192.168.88.1")
-RO_USER = os.getenv("RO_USER", "admin")
-RO_PASS = os.getenv("RO_PASS", "")
+RO_HOST = os.getenv("RO_HOST", "172.17.0.1")
+RO_USER = os.getenv("RO_USER", "benjor")
+RO_PASS = os.getenv("qpwoieur", "")
 
 def connect_mikrotik():
     try:
