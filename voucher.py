@@ -1,25 +1,24 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, flash
 from routeros_api import RouterOsApiPool
 import random
 import string
 import os
 
-app = Flask(__name__)
+# Tell Flask templates are in the same folder
+app = Flask(__name__, template_folder=os.path.dirname(os.path.abspath(__file__)))
 app.secret_key = os.urandom(24)
 
 # MikroTik connection settings
-ROUTER_HOST = "172.17.0.1"  # change to your MikroTik IP
-ROUTER_USER = "benjor"
-ROUTER_PASS = "qpwoieur"
+ROUTER_HOST = "192.168.88.1"  # change to your MikroTik IP
+ROUTER_USER = "admin"
+ROUTER_PASS = "yourpassword"
 ROUTER_PORT = 8728  # default API port
 
 def generate_voucher(length=8):
-    """Generate a random alphanumeric voucher code"""
     chars = string.ascii_uppercase + string.digits
     return ''.join(random.choice(chars) for _ in range(length))
 
 def add_voucher_to_mikrotik(voucher_code):
-    """Add voucher to MikroTik hotspot via API"""
     try:
         api = RouterOsApiPool(
             host=ROUTER_HOST,
