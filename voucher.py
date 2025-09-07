@@ -1,121 +1,65 @@
-from flask import Flask, render_template, request, flash
+from flask import Flask, render_template, request, jsonify
+from routeros_api import RouterOsApiPool
+import os
 import random
 import string
-import sqlite3
-import os
-from functools import wraps
-from routeros_api import RouterOsApiPool
 
-app = Flask(__name__, template_folder='.', static_folder='.')
-app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")
+app = Flask(__name__)
 
-DB_FILE = 'vouchers.db'
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
+# Mikrotik connection settings (update with your router credentials)
+ROUTER_HOST = os.getenv("ROUTER_HOST", "192.168.88.1")
+ROUTER_USER = os.getenv("ROUTER_USER", "admin")
+ROUTER_PASS = os.getenv("ROUTER_PASS", "")
+ROUTER_PORT = int(os.getenv("ROUTER_PORT", 8728))
 
-# ---------------------- Database Setup ----------------------
-def init_db():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS vouchers (
-            username TEXT PRIMARY KEY,
-            code TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-    conn.close()
+vouchers = []  # In-memory store; replace with database if needed
 
-init_db()
-
-# ---------------------- Helper Functions ----------------------
-def generate_voucher(length=8):
+def generate_code(length=8):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
-def get_all_vouchers():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('SELECT username, code FROM vouchers')
-    data = c.fetchall()
-    conn.close()
-    return dict(data)
-
-def get_voucher(username):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('SELECT code FROM vouchers WHERE username = ?', (username,))
-    row = c.fetchone()
-    conn.close()
-    return row[0] if row else None
-
-def save_voucher(username, code):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('INSERT OR REPLACE INTO vouchers(username, code) VALUES (?, ?)', (username, code))
-    conn.commit()
-    conn.close()
-
-# ---------------------- Mikrotik Integration ----------------------
-def add_to_mikrotik(username, password):
+def create_hotspot_user(username, code):
     try:
-        api_pool = RouterOsApiPool(
-            host=os.getenv("MT_HOST", "172.17.0.1"),
-            username=os.getenv("MT_USER", "benjor"),
-            password=os.getenv("MT_PASS", "qpwoieur"),
-            port=int(os.getenv("MT_PORT", 8728)),
+        connection = RouterOsApiPool(
+            host=ROUTER_HOST,
+            username=ROUTER_USER,
+            password=ROUTER_PASS,
+            port=ROUTER_PORT,
             plaintext_login=True
         )
-        api = api_pool.get_api()
-
+        api = connection.get_api()
         api.get_resource('/ip/hotspot/user').add(
             name=username,
-            password=password,
-            profile=os.getenv("MT_PROFILE", "default")
+            password=code,
+            profile="default"
         )
-
-        api_pool.disconnect()
+        connection.disconnect()
         return True
     except Exception as e:
-        print("Mikrotik error:", e)
+        print("Router connection error:", e)
         return False
 
-# ---------------------- Routes ----------------------
-@app.route('/', methods=['GET', 'POST'])
+@app.route("/")
 def index():
-    username = ""
-    voucher_code = ""
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        if username:
-            existing = get_voucher(username)
-            if existing:
-                voucher_code = existing
-                flash('Voucher already exists for this username!', 'info')
-            else:
-                voucher_code = generate_voucher()
-                save_voucher(username, voucher_code)
+    return render_template("index.html")
 
-                # Add to Mikrotik
-                if add_to_mikrotik(username, voucher_code):
-                    flash('Voucher generated and added to Mikrotik!', 'success')
-                else:
-                    flash('Voucher saved but Mikrotik connection failed!', 'error')
+@app.route("/generate", methods=["POST"])
+def generate():
+    username = request.form.get("username")
+    if not username:
+        return jsonify({"error": "Username required"}), 400
+    
+    code = generate_code()
+    success = create_hotspot_user(username, code)
+    
+    if success:
+        vouchers.append({"username": username, "code": code})
+        return jsonify({"voucher": code})
+    else:
+        return jsonify({"error": "Failed to create voucher"}), 500
 
-    return render_template('index.html', username=username, voucher=voucher_code)
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        password = request.args.get('password', '')
-        if password != ADMIN_PASSWORD:
-            return "Unauthorized! Add ?password=YOUR_PASSWORD in URL.", 401
-        return f(*args, **kwargs)
-    return decorated_function
-
-@app.route('/admin')
-@admin_required
+@app.route("/admin")
 def admin():
-    vouchers = get_all_vouchers()
-    return render_template('admin.html', vouchers=vouchers)
+    return render_template("admin.html", vouchers=vouchers)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
