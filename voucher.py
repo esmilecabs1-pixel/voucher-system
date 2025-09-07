@@ -9,7 +9,7 @@ app = Flask(__name__, template_folder='.')  # Use current folder for HTML
 # MikroTik connection settings
 RO_HOST = os.getenv("RO_HOST", "172.17.0.1")
 RO_USER = os.getenv("RO_USER", "benjor")
-RO_PASS = os.getenv("qpwoieur", "")
+RO_PASS = os.getenv("RO_PASS", "qpwoieur")
 
 def connect_mikrotik():
     try:
