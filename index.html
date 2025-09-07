@@ -3,30 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <title>Voucher Generator</title>
-    <script>
-        async function generateVoucher() {
-            document.getElementById("username").value = "";
-            document.getElementById("password").value = "";
-            document.getElementById("status").textContent = "Generating...";
-            
-            const response = await fetch("/generate", { method: "POST" });
-            const data = await response.json();
-            
-            if (data.status === "success") {
-                document.getElementById("username").value = data.username;
-                document.getElementById("password").value = data.password;
-                document.getElementById("status").textContent = "Voucher generated successfully!";
-            } else {
-                document.getElementById("status").textContent = data.message;
-            }
-        }
-    </script>
 </head>
 <body>
     <h1>Generate Voucher</h1>
-    <button onclick="generateVoucher()">Generate Voucher</button>
-    <p>Status: <span id="status">Idle</span></p>
-    <input type="text" id="username" placeholder="Username" readonly>
-    <input type="text" id="password" placeholder="Password" readonly>
+    <button id="generateBtn">Generate</button>
+    <p id="voucherOutput"></p>
+
+    <script>
+        const btn = document.getElementById("generateBtn");
+        const output = document.getElementById("voucherOutput");
+
+        btn.addEventListener("click", () => {
+            fetch("/generate", { method: "POST" })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === "success") {
+                    output.textContent = "Voucher: " + data.voucher;
+                } else {
+                    output.textContent = "Error: " + data.message;
+                }
+            })
+            .catch(err => output.textContent = "Error connecting to server");
+        });
+    </script>
 </body>
 </html>
