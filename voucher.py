@@ -9,9 +9,9 @@ app = Flask(__name__, template_folder=os.path.dirname(os.path.abspath(__file__))
 app.secret_key = os.urandom(24)
 
 # MikroTik connection settings
-ROUTER_HOST = "192.168.88.1"  # change to your MikroTik IP
-ROUTER_USER = "admin"
-ROUTER_PASS = "yourpassword"
+ROUTER_HOST = "172.17.0.1"  # change to your MikroTik IP
+ROUTER_USER = "benjor"
+ROUTER_PASS = "qpwoieur"
 ROUTER_PORT = 8728  # default API port
 
 def generate_voucher(length=8):
