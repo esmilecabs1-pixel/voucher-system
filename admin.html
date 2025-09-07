@@ -4,18 +4,24 @@
     <title>Admin - Voucher List</title>
 </head>
 <body>
-    <h1>All Generated Vouchers</h1>
-    <table border="1">
-        <tr>
-            <th>Username</th>
-            <th>Voucher Code</th>
-        </tr>
-        {% for user, code in vouchers.items() %}
-        <tr>
-            <td>{{ user }}</td>
-            <td>{{ code }}</td>
-        </tr>
-        {% endfor %}
+    <h1>Generated Vouchers</h1>
+    <table border="1" cellpadding="5">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Voucher Code</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in vouchers %}
+            <tr>
+                <td>{{ v.username }}</td>
+                <td>{{ v.code }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
+    <br>
+    <a href="/">Back to Home</a>
 </body>
 </html>
