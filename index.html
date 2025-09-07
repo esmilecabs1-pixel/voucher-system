@@ -2,25 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Voucher System</title>
+    <title>Voucher Generator</title>
+    <script>
+        async function generateVoucher() {
+            document.getElementById("username").value = "";
+            document.getElementById("password").value = "";
+            document.getElementById("status").textContent = "Generating...";
+            
+            const response = await fetch("/generate", { method: "POST" });
+            const data = await response.json();
+            
+            if (data.status === "success") {
+                document.getElementById("username").value = data.username;
+                document.getElementById("password").value = data.password;
+                document.getElementById("status").textContent = "Voucher generated successfully!";
+            } else {
+                document.getElementById("status").textContent = data.message;
+            }
+        }
+    </script>
 </head>
 <body>
     <h1>Generate Voucher</h1>
-    <form method="POST">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required>
-        <button type="submit">Generate</button>
-    </form>
-    <div id="voucher-result">
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <ul>
-                {% for message in messages %}
-                    <li>{{ message }}</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
-    </div>
+    <button onclick="generateVoucher()">Generate Voucher</button>
+    <p>Status: <span id="status">Idle</span></p>
+    <input type="text" id="username" placeholder="Username" readonly>
+    <input type="text" id="password" placeholder="Password" readonly>
 </body>
 </html>
