@@ -59,8 +59,8 @@ def add_to_mikrotik(username, password):
     try:
         api_pool = RouterOsApiPool(
             host=os.getenv("MT_HOST", "172.17.0.1"),
-            username=os.getenv("MT_USER", "cabigas"),
-            password=os.getenv("MT_PASS", "Esmilefb@Genuin3"),
+            username=os.getenv("MT_USER", "benjor"),
+            password=os.getenv("MT_PASS", "qpwoieur"),
             port=int(os.getenv("MT_PORT", 8728)),
             plaintext_login=True
         )
