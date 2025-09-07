@@ -1,61 +1,52 @@
-from flask import Flask, render_template, request, flash
-from routeros_api import RouterOsApiPool
+from flask import Flask, render_template, request, jsonify
+import routeros_api
 import random
 import string
 import os
 
-# Tell Flask templates are in the same folder
-app = Flask(__name__, template_folder=os.path.dirname(os.path.abspath(__file__)))
-app.secret_key = os.urandom(24)
+app = Flask(__name__)
 
-# MikroTik connection settings
-ROUTER_HOST = "172.17.0.1"  # change to your MikroTik IP
-ROUTER_USER = "benjor"
-ROUTER_PASS = "qpwoieur"
-ROUTER_PORT = 8728  # default API port
+# MikroTik connection configuration
+MIKROTIK_HOST = os.getenv("MIKROTIK_HOST", "192.168.88.1")
+MIKROTIK_USER = os.getenv("MIKROTIK_USER", "admin")
+MIKROTIK_PASS = os.getenv("MIKROTIK_PASS", "")
 
 def generate_voucher(length=8):
-    chars = string.ascii_uppercase + string.digits
-    return ''.join(random.choice(chars) for _ in range(length))
+    """Generate a random alphanumeric voucher code."""
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
-def add_voucher_to_mikrotik(voucher_code):
+def add_user_to_mikrotik(username):
+    """Add user to MikroTik Hotspot. Returns True if successful."""
     try:
-        api = RouterOsApiPool(
-            host=ROUTER_HOST,
-            username=ROUTER_USER,
-            password=ROUTER_PASS,
-            port=ROUTER_PORT,
+        connection = routeros_api.RouterOsApiPool(
+            MIKROTIK_HOST,
+            username=MIKROTIK_USER,
+            password=MIKROTIK_PASS,
             plaintext_login=True
         )
-        router = api.get_api()
-        router.get_resource('/ip/hotspot/user').add(
-            name=voucher_code,
-            password=voucher_code,
-            profile='default',
-            limit_uptime='1h'
-        )
-        api.disconnect()
-        print(f"[SUCCESS] Voucher '{voucher_code}' added to MikroTik")
+        api = connection.get_api()
+        api.get_resource('/ip/hotspot/user').add(name=username, password=username, profile='default')
+        connection.disconnect()
         return True
     except Exception as e:
-        print(f"[ERROR] Failed to add voucher '{voucher_code}' to MikroTik:", e)
+        print(f"Failed to add user {username} to MikroTik: {e}")
         return False
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route("/")
 def index():
-    voucher_code = ""
-    if request.method == 'POST':
-        voucher_code = generate_voucher()
-        success = add_voucher_to_mikrotik(voucher_code)
-        if success:
-            flash(f"Voucher generated and added: {voucher_code}", "success")
-        else:
-            flash(f"Voucher generated but failed to add to MikroTik: {voucher_code}", "danger")
-    return render_template("index.html", voucher_code=voucher_code)
+    return render_template("index.html")
 
-@app.route('/admin')
+@app.route("/admin")
 def admin():
     return render_template("admin.html")
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+@app.route("/generate", methods=["POST"])
+def generate():
+    voucher = generate_voucher()
+    if add_user_to_mikrotik(voucher):
+        return jsonify({"status": "success", "voucher": voucher})
+    else:
+        return jsonify({"status": "error", "message": "MikroTik unreachable"})
+
+if __name__ == "__main__":
+    app.run(debug=True)
