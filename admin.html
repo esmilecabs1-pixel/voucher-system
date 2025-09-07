@@ -1,27 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Admin - Voucher System</title>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
 </head>
 <body>
     <h1>Admin Panel</h1>
-    <table border="1" cellpadding="5" cellspacing="0">
-        <thead>
-            <tr>
-                <th>Username</th>
-                <th>Voucher Code</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for v in vouchers %}
-            <tr>
-                <td>{{ v.username }}</td>
-                <td>{{ v.code }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <p><a href="/">Back to Generate Voucher</a></p>
+    <p>This page can be used for future admin functionalities.</p>
+    <p><a href="/">Back to Voucher Generator</a></p>
 </body>
 </html>
