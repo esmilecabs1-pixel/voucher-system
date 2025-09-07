@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <title>Voucher System</title>
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 </head>
 <body>
     <h1>Generate Voucher</h1>
-    <button id="generate-btn">Generate Voucher</button>
-    <p id="voucher-output"></p>
-
-    <script>
-        $('#generate-btn').click(function(){
-            $.post('/generate', function(data){
-                if(data.status === "success"){
-                    $('#voucher-output').text("Voucher: " + data.voucher);
-                } else {
-                    $('#voucher-output').text("Error: " + data.message);
-                }
-            });
-        });
-    </script>
+    <form method="POST">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+        <button type="submit">Generate</button>
+    </form>
+    <div id="voucher-result">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+    </div>
 </body>
 </html>

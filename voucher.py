@@ -1,52 +1,23 @@
-from flask import Flask, render_template, request, jsonify
-import routeros_api
-import random
-import string
+from flask import Flask, render_template_string, request, flash
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder=os.getcwd())  # Use current folder for templates
+app.secret_key = "YOUR_SECRET_KEY"  # Replace with your secret key
 
-# MikroTik connection configuration
-MIKROTIK_HOST = os.getenv("MIKROTIK_HOST", "192.168.88.1")
-MIKROTIK_USER = os.getenv("MIKROTIK_USER", "admin")
-MIKROTIK_PASS = os.getenv("MIKROTIK_PASS", "")
+# Load HTML files as strings
+def load_html(filename):
+    with open(filename, 'r', encoding='utf-8') as f:
+        return f.read()
 
-def generate_voucher(length=8):
-    """Generate a random alphanumeric voucher code."""
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
-
-def add_user_to_mikrotik(username):
-    """Add user to MikroTik Hotspot. Returns True if successful."""
-    try:
-        connection = routeros_api.RouterOsApiPool(
-            MIKROTIK_HOST,
-            username=MIKROTIK_USER,
-            password=MIKROTIK_PASS,
-            plaintext_login=True
-        )
-        api = connection.get_api()
-        api.get_resource('/ip/hotspot/user').add(name=username, password=username, profile='default')
-        connection.disconnect()
-        return True
-    except Exception as e:
-        print(f"Failed to add user {username} to MikroTik: {e}")
-        return False
-
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("index.html")
+    html_content = load_html("index.html")
+    return render_template_string(html_content)
 
-@app.route("/admin")
+@app.route("/admin", methods=["GET", "POST"])
 def admin():
-    return render_template("admin.html")
-
-@app.route("/generate", methods=["POST"])
-def generate():
-    voucher = generate_voucher()
-    if add_user_to_mikrotik(voucher):
-        return jsonify({"status": "success", "voucher": voucher})
-    else:
-        return jsonify({"status": "error", "message": "MikroTik unreachable"})
+    html_content = load_html("admin.html")
+    return render_template_string(html_content)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
