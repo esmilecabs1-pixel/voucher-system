@@ -2,38 +2,21 @@
 <html>
 <head>
     <title>Voucher System</title>
-    <script>
-        async function generateVoucher() {
-            const username = document.getElementById("username").value;
-            if (!username) {
-                alert("Please enter a username");
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append("username", username);
-
-            const response = await fetch("/generate", {
-                method: "POST",
-                body: formData
-            });
-
-            const data = await response.json();
-            if (data.voucher) {
-                document.getElementById("voucherBox").innerText = "Voucher: " + data.voucher;
-                document.getElementById("username").value = "";
-            } else {
-                alert(data.error || "Error generating voucher");
-            }
-        }
-    </script>
 </head>
 <body>
-    <h1>Voucher System</h1>
-    <input type="text" id="username" placeholder="Enter username" />
-    <button onclick="generateVoucher()">Generate</button>
-    <div id="voucherBox" style="margin-top: 20px; font-weight: bold;"></div>
-    <br>
-    <a href="/admin">Go to Admin</a>
+    <h1>Generate Voucher</h1>
+    <form method="POST">
+        <label>Username:</label>
+        <input type="text" name="username" required>
+        <button type="submit">Generate</button>
+    </form>
+
+    {% if code %}
+        <h2>Voucher Generated!</h2>
+        <p>Username: {{ username }}</p>
+        <p>Voucher Code: {{ code }}</p>
+    {% endif %}
+
+    <p><a href="/admin">Go to Admin Panel</a></p>
 </body>
 </html>
