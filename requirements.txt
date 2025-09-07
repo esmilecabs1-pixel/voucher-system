@@ -1,6 +1,6 @@
 Flask==3.1.0
 Jinja2==3.1.2
-routeros-api==3.4.1
+routeros-api==0.21.0
 requests==2.31.0
 python-dotenv==1.0.0
 gunicorn==21.2.0
