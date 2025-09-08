@@ -1,51 +1,52 @@
-from flask import Flask, render_template, request, jsonify
-import os
+from flask import Flask, render_template, request
+from routeros_api import RouterOsApiPool
 import random
 import string
-import routeros_api
 
-app = Flask(__name__, template_folder='.')  # Use current folder for HTML
+app = Flask(__name__)
 
-# MikroTik connection settings
-RO_HOST = os.getenv("RO_HOST", "172.17.0.1")
-RO_USER = os.getenv("RO_USER", "cabigas")
-RO_PASS = os.getenv("RO_PASS", "Esmilefb@Genuin3")
+# MikroTik connection details (replace with your real values or use .env)
+MIKROTIK_IP = "172.17.0.1"
+MIKROTIK_USER = "admin"
+MIKROTIK_PASS = "password"
+MIKROTIK_PORT = 8728
+
+def generate_voucher_code(length=8):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 def connect_mikrotik():
     try:
-        connection = routeros_api.RouterOsApiPool(
-            RO_HOST, username=RO_USER, password=RO_PASS, plaintext_login=True
+        api_pool = RouterOsApiPool(
+            MIKROTIK_IP, username=MIKROTIK_USER, password=MIKROTIK_PASS, port=MIKROTIK_PORT, plaintext_login=True
         )
-        api = connection.get_api()
-        return connection, api
+        return api_pool.get_api(), api_pool
     except Exception as e:
-        print("MikroTik connection failed:", e)
+        print(f"Failed to connect to MikroTik: {e}")
         return None, None
 
-def generate_code(length=8):
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
-
-@app.route("/", methods=["GET", "POST"])
+@app.route("/")
 def index():
-    code = ""
-    if request.method == "POST":
-        connection, api = connect_mikrotik()
-        if not api:
-            return "MikroTik unreachable. Cannot generate voucher.", 500
-        
-        code = generate_code()
-        try:
-            api.get_resource('/ip/hotspot/user').add(name=code, password=code, profile='default')
-            connection.disconnect()
-        except Exception as e:
-            print("Failed to add voucher:", e)
-            return f"Voucher generated but failed to add to MikroTik: {code}", 500
-    
-    return render_template("index.html", code=code)
+    return render_template("index.html")
 
 @app.route("/admin")
 def admin():
     return render_template("admin.html")
 
+@app.route("/generate", methods=["POST"])
+def generate():
+    api, api_pool = connect_mikrotik()
+    if not api:
+        return render_template("error.html", message="MikroTik unreachable. Please try again later.")
+
+    voucher = generate_voucher_code()
+    try:
+        user_resource = api.get_resource("/ip/hotspot/user")
+        user_resource.add(name=voucher, password=voucher, profile="default")
+        api_pool.disconnect()
+        return render_template("gcash_success.html", voucher=voucher)
+    except Exception as e:
+        print(f"Error adding voucher to MikroTik: {e}")
+        return render_template("error.html", message="Failed to add voucher to MikroTik.")
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+    app.run(host="0.0.0.0", port=5000)

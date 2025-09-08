@@ -1,16 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Voucher Generator</title>
+  <title>Voucher Generator</title>
 </head>
 <body>
-    <h1>Generate MikroTik Voucher</h1>
-    <form method="POST">
-        <button type="submit">Generate Voucher</button>
-    </form>
-    {% if code %}
-        <p>Voucher Code: <strong>{{ code }}</strong></p>
-    {% endif %}
+  <h1>Welcome to Voucher Generator</h1>
+  <form method="post" action="/generate">
+    <button type="submit">Generate Voucher</button>
+  </form>
 </body>
 </html>
