@@ -7,8 +7,8 @@ app = Flask(__name__)
 
 # MikroTik connection details (replace with your real values or use .env)
 MIKROTIK_IP = "172.17.0.1"
-MIKROTIK_USER = "admin"
-MIKROTIK_PASS = "password"
+MIKROTIK_USER = "cabigas"
+MIKROTIK_PASS = "Esmilefb@Genuin3"
 MIKROTIK_PORT = 8728
 
 def generate_voucher_code(length=8):
