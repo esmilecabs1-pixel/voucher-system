@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Gcash Payment</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-  <h1>Pay with GCash</h1>
-  <p>After payment, a voucher will be generated.</p>
+<body class="container py-5">
+  <h2 class="mb-4">Pay with Gcash</h2>
+  <p>Proceed with Gcash payment to generate a voucher.</p>
+  <form action="/generate" method="post">
+    <button type="submit" class="btn btn-success">Pay & Generate Voucher</button>
+  </form>
 </body>
 </html>

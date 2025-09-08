@@ -1,7 +1,7 @@
 import os
 import random
 import string
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request
 from routeros_api import RouterOsApiPool, exceptions
 from dotenv import load_dotenv
 
